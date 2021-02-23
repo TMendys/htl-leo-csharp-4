@@ -50,9 +50,10 @@ namespace ConsoleChart
 
             //Makes a group as the Animal as a key and the Number of attacks as the Value. 
             var lines = attackDatas.GroupBy(x => x.Animal)
-                .Select(x => new { Animal = x.Key, NumberOfAttacks = x.Sum(x => x.NumberOfAttacks) })
+                .Select(x => new 
+                { Animal = x.Key, NumberOfAttacks = x.Sum(x => x.NumberOfAttacks) })
                 .OrderByDescending(x => x.NumberOfAttacks)
-                .Take(29); //Chose how many lines you want to show. After 29 it starts to bug out?
+                .Take(100);
 
             //Get the max Value of attack and the max Length of the Animal string.
             int maxValue = lines.Max(x => x.NumberOfAttacks);
@@ -64,22 +65,23 @@ namespace ConsoleChart
                 Console.Write($"{item.Animal} | ");
                 //Makes a Red bar.
                 Console.BackgroundColor = ConsoleColor.Red;
-                Console.WriteLine($"{Bar(maxValue, item.NumberOfAttacks, (x, y) => (double)y / x * 50 )}");
+                Console.Write($"{Bar(maxValue, item.NumberOfAttacks, (x, y) => (double)y / x * 50 )}");
                 Console.ResetColor();
+                Console.WriteLine();
             }
         }
 
         //Add spaces for alignment.
         static string Bar(int maxValue, int Length, Func<int, int, double> f)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder space = new StringBuilder();
 
             for (int i = 0; i < f(maxValue, Length); i++)
             {
-                sb.Append(" ");
+                space.Append(" ");
             }
 
-            return sb.ToString();
+            return space.ToString();
         }
 
     }
