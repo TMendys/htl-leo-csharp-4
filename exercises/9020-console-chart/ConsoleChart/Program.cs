@@ -50,22 +50,27 @@ namespace ConsoleChart
 
             //Makes a group as the Animal as a key and the Number of attacks as the Value. 
             var lines = attackDatas.GroupBy(x => x.Animal)
-                .Select(x => new 
+                .Select(x => new
                 { Animal = x.Key, NumberOfAttacks = x.Sum(x => x.NumberOfAttacks) })
-                .OrderByDescending(x => x.NumberOfAttacks)
-                .Take(100);
+                .OrderByDescending(x => x.NumberOfAttacks);
+
+            //See if there is arguments to be passed to the application. 
+            //Take the Value to make the list shorter later.
+            int result = lines.Count();
+            if (args.Length != 0)
+                int.TryParse(args[0], out result);
 
             //Get the max Value of attack and the max Length of the Animal string.
             int maxValue = lines.Max(x => x.NumberOfAttacks);
             int maxStringLength = lines.Max(x => x.Animal.Length);
 
-            foreach (var item in lines)
+            foreach (var item in lines.Take(result))
             {
-                Console.Write($"{Bar(maxStringLength, item.Animal.Length, (x, y) => (double)x - y)}");
+                Console.Write(Bar(maxStringLength, item.Animal.Length, (x, y) => (double)x - y));
                 Console.Write($"{item.Animal} | ");
                 //Makes a Red bar.
                 Console.BackgroundColor = ConsoleColor.Red;
-                Console.Write($"{Bar(maxValue, item.NumberOfAttacks, (x, y) => (double)y / x * 50 )}");
+                Console.Write(Bar(maxValue, item.NumberOfAttacks, (x, y) => (double)y / x * 50 ));
                 Console.ResetColor();
                 Console.WriteLine();
             }
