@@ -72,17 +72,6 @@ namespace ConsoleChart
         }
 
         //Add spaces for alignment.
-        static string Bar(int maxValue, int Length, Func<int, int, double> f)
-        {
-            StringBuilder space = new StringBuilder();
-
-            for (int i = 0; i < f(maxValue, Length); i++)
-            {
-                space.Append(" ");
-            }
-
-            return space.ToString();
-        }
-
+        static string Bar(int maxValue, int Length, Func<int, int, double> f) => new string(' ', (int)(f(maxValue, Length)));
     }
 }
