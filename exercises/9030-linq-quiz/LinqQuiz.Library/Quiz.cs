@@ -14,10 +14,14 @@ namespace LinqQuiz.Library
         /// <exception cref="ArgumentOutOfRangeException">
         ///     Thrown if <paramref name="exclusiveUpperLimit"/> is lower than 1.
         /// </exception>
-        public static int[] GetEvenNumbers(int exclusiveUpperLimit)
-        {
-            throw new NotImplementedException();
-        }
+        public static int[] GetEvenNumbers(int exclusiveUpperLimit) =>
+            exclusiveUpperLimit >= 1 ? 
+                Enumerable.Range(1, exclusiveUpperLimit - 1)
+                .Where(x => x % 2 == 0)
+                .ToArray()
+                : 
+                throw new ArgumentOutOfRangeException();
+        
 
         /// <summary>
         /// Returns the squares of the numbers between 1 and the specified upper limit 
@@ -31,10 +35,17 @@ namespace LinqQuiz.Library
         /// The result is an empty array if <paramref name="exclusiveUpperLimit"/> is lower than 1.
         /// The result is in descending order.
         /// </remarks>
-        public static int[] GetSquares(int exclusiveUpperLimit)
-        {
-            throw new NotImplementedException();
-        }
+        public static int[] GetSquares(int exclusiveUpperLimit) =>
+            exclusiveUpperLimit >= 1 ?
+                checked(
+                Enumerable.Range(1, exclusiveUpperLimit - 1)
+                .Select(x => x * x)
+                .Where(x => x % 7 == 0)
+                .OrderByDescending(x => x)
+                .ToArray())
+                :
+                new int[0];
+        
 
         /// <summary>
         /// Returns a statistic about families.
@@ -52,7 +63,22 @@ namespace LinqQuiz.Library
         /// </remarks>
         public static FamilySummary[] GetFamilyStatistic(IReadOnlyCollection<IFamily> families)
         {
-            throw new NotImplementedException();
+            if(families == null)
+                throw new ArgumentNullException();
+
+            var summary = new FamilySummary[families.Count];
+            int index = 0;
+
+            foreach (var family in families)
+            {
+                summary[index] = new FamilySummary {
+                    FamilyID = family.ID,
+                    NumberOfFamilyMembers = family.Persons.Count(),
+                    AverageAge = family.Persons.Count() != 0 ? family.Persons.Average(x => x.Age) : 0 };
+                index++;
+            }
+
+            return summary;
         }
 
         /// <summary>
@@ -70,7 +96,22 @@ namespace LinqQuiz.Library
         /// </remarks>
         public static (char letter, int numberOfOccurrences)[] GetLetterStatistic(string text)
         {
-            throw new NotImplementedException();
+            var result = text.ToUpper()
+                .Where(char.IsLetter)
+                .GroupBy(c => c)
+                .Where(c => char.IsLetter(c.Key))
+                .Select(g => new { letter = g.Key, numberOfOccurrences = g.Count() });
+
+            var endResult = new (char letter, int numberOfOccurrences)[result.Count()];
+            int index = 0;
+
+            foreach (var row in result)
+            {
+                endResult[index] = (row.letter, row.numberOfOccurrences);
+                index++;
+            }
+
+            return endResult;
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Maze.Library;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Maze.Solver
 {
@@ -32,15 +34,107 @@ namespace Maze.Solver
         public void MoveRobotToExit()
         {
             // Here you have to add your code
-
+            Direction direction;
+            bool move = canIMove(out direction);
             // Trivial sample algorithm that can just move right
             var reachedEnd = false;
             robot.ReachedExit += (_, __) => reachedEnd = true;
 
-            while (!reachedEnd)
+
+            
+
+            while (!reachedEnd && move)
             {
-                robot.Move(Direction.Right);
+                switch (direction)
+                {
+                    case Direction.Left:
+                        robot.Move(Direction.Left);
+                        break;
+
+                    case Direction.Up:
+                        robot.Move(Direction.Up);
+                        break;
+
+                    case Direction.Right:
+                        robot.Move(Direction.Right);
+                        break;
+
+                    case Direction.Down:
+                        robot.Move(Direction.Down);
+                        break;
+                }
+
+                move = robot.CanIMove(direction) ? true : canIMove2(ref direction);
             }
         }
+
+
+
+
+        public Direction MirrorDirection(Direction direction)
+        {
+            return direction switch
+            {
+                Direction.Left => Direction.Right,
+                Direction.Up => Direction.Down,
+                Direction.Right => Direction.Left,
+                Direction.Down => Direction.Up,
+                _ => throw new System.Exception()
+            };
+        }
+
+        public bool canIMove2(ref Direction direction)
+        {
+            List<Direction> d = new List<Direction>()
+            {
+                Direction.Left,
+                Direction.Up,
+                Direction.Right,
+                Direction.Down
+            };
+
+            d.Remove(MirrorDirection(direction));
+
+            foreach (var item in d)
+            {
+                if (robot.CanIMove(item))
+                {
+                    direction = item;
+                    return true;
+                }
+            }
+
+            robot.HaltAndCatchFire();
+            return false;
+        }
+
+        public bool canIMove(out Direction direction)
+        {
+            if (robot.CanIMove(Direction.Left))
+            {
+                direction = Direction.Left;
+                return true;
+            }
+            else if (robot.CanIMove(Direction.Up))
+            {
+                direction = Direction.Up;
+                return true;
+            }
+            else if (robot.CanIMove(Direction.Right))
+            {
+                direction = Direction.Right;
+                return true;
+            }
+            else if (robot.CanIMove(Direction.Down))
+            {
+                direction = Direction.Down;
+                return true;
+            }
+
+            robot.HaltAndCatchFire();
+            direction = Direction.Left;
+            return false;
+        }
+
     }
 }
