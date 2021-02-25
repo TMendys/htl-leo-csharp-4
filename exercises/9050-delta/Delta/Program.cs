@@ -4,10 +4,6 @@ using System.Linq;
 
 namespace Delta
 {
-    class Data
-    {
-    }
-
     class Program
     {
         readonly static string[] linesOld = System.IO.File.ReadAllLines("data-old.txt");
@@ -23,6 +19,7 @@ namespace Delta
 
         static void Main(string[] args)
         {
+            Console.Write("  ");
             foreach (var item in Header)
             {
                 Console.Write(item + "\t");
