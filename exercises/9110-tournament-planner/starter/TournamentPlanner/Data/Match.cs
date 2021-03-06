@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TournamentPlanner.Data
 {
@@ -6,9 +8,22 @@ namespace TournamentPlanner.Data
     {
         public int ID { get; set; }
 
+        [Required]
         public int Round { get; set; }
 
-        // This class is NOT COMPLETE.
-        // Todo: Complete the class according to the requirements
+        [Required]
+        public int Player1ID { get; set; }
+
+        [Required]
+        public int Player2ID { get; set; }
+
+        public int? WinnerID { get; set; }
+
+        public int GetPlayer(PlayerNumber player) =>
+            player switch
+            {
+                PlayerNumber.Player1 => Player1ID,
+                PlayerNumber.Player2 => Player2ID
+            };
     }
 }

@@ -14,17 +14,24 @@ namespace TournamentPlanner.Data
             : base(options)
         { }
 
-        // This class is NOT COMPLETE.
-        // Todo: Complete the class according to the requirements
+        public DbSet<Player> Players { get; set; }
+        public DbSet<Match> Matches { get; set; }
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    modelBuilder.Entity<Match>()
+        //}
 
         /// <summary>
         /// Adds a new player to the player table
         /// </summary>
         /// <param name="newPlayer">Player to add</param>
         /// <returns>Player after it has been added to the DB</returns>
-        public Task<Player> AddPlayer(Player newPlayer)
+        public async Task<Player> AddPlayer(Player newPlayer)
         {
-            throw new NotImplementedException();
+            Add(newPlayer);
+            await SaveChangesAsync();
+            return newPlayer;
         }
 
         /// <summary>
@@ -34,9 +41,19 @@ namespace TournamentPlanner.Data
         /// <param name="player2Id">ID of player 2</param>
         /// <param name="round">Number of the round</param>
         /// <returns>Generated match after it has been added to the DB</returns>
-        public Task<Match> AddMatch(int player1Id, int player2Id, int round)
+        public async Task<Match> AddMatch(int player1Id, int player2Id, int round)
         {
-            throw new NotImplementedException();
+            Match match = new ()
+            {
+                Player1ID = player1Id,
+                Player2ID = player2Id,
+                Round = round
+            };
+
+            Add(match);
+            await SaveChangesAsync();
+
+            return match;
         }
 
         /// <summary>
@@ -45,26 +62,30 @@ namespace TournamentPlanner.Data
         /// <param name="matchId">ID of the match to update</param>
         /// <param name="player">Player who has won the match</param>
         /// <returns>Match after it has been updated in the DB</returns>
-        public Task<Match> SetWinner(int matchId, PlayerNumber player)
+        public async Task<Match> SetWinner(int matchId, PlayerNumber player)
         {
-            throw new NotImplementedException();
+            Match match = Matches.Find(matchId);
+            match.WinnerID = match.GetPlayer(player);
+
+            await SaveChangesAsync();
+
+            return match;
         }
 
         /// <summary>
         /// Get a list of all matches that do not have a winner yet
         /// </summary>
         /// <returns>List of all found matches</returns>
-        public Task<IList<Match>> GetIncompleteMatches()
-        {
-            throw new NotImplementedException();
-        }
+        public async Task<IList<Match>> GetIncompleteMatches() => await Matches.Where(m => m.WinnerID == null).ToListAsync();
+        
 
         /// <summary>
         /// Delete everything (matches, players)
         /// </summary>
-        public Task DeleteEverything()
+        public async Task DeleteEverything()
         {
-            throw new NotImplementedException();
+            await Database.ExecuteSqlRawAsync("DELETE from Matches");
+            await Database.ExecuteSqlRawAsync("DELETE from Players");
         }
 
         /// <summary>
@@ -72,18 +93,52 @@ namespace TournamentPlanner.Data
         /// </summary>
         /// <param name="playerFilter">Player filter. If null, all players must be returned</param>
         /// <returns>List of all found players</returns>
-        public Task<IList<Player>> GetFilteredPlayers(string playerFilter = null)
-        {
-            throw new NotImplementedException();
-        }
+        public async Task<IList<Player>> GetFilteredPlayers(string playerFilter = null) =>
+            await Players.Where(p => playerFilter == null || p.Name.Contains(playerFilter)).ToListAsync();
+
 
         /// <summary>
         /// Generate match records for the next round
         /// </summary>
         /// <exception cref="InvalidOperationException">Error while generating match records</exception>
-        public Task GenerateMatchesForNextRound()
+        public async Task GenerateMatchesForNextRound()
         {
-            throw new NotImplementedException();
+            if ((await Players.CountAsync()) != 32 || (await GetIncompleteMatches()).Count < 0)
+                throw new InvalidOperationException();
+
+            if (await Matches.AnyAsync())
+                await GenerateNextRound();
+            else
+                await GenerateFirstRound();
+        }
+
+        internal async Task GenerateFirstRound()
+        {
+            List<Player> players = await Players.ToListAsync();
+
+            for (int i = 0; i < players.Count; i += 2)
+            {
+                await AddMatch(players[i].ID, players[i + 1].ID, 1);
+            }
+        }
+
+        private async Task GenerateNextRound()
+        {
+            List<Match> matches = await Matches.ToListAsync();
+            List<Player> players = await Players.ToListAsync();
+
+            int lastRound =  matches.Max(m => m.Round);
+            List<Player> playersForNextRound = new();
+
+            foreach (Match match in matches.Where(m => m.Round == lastRound))
+            {
+                playersForNextRound.Add(players.FirstOrDefault(p => p.ID == match.WinnerID));
+            }
+
+            for (int i = 0; i < playersForNextRound.Count; i += 2)
+            {
+                await AddMatch(playersForNextRound[i].ID, playersForNextRound[i + 1].ID, lastRound + 1);
+            }
         }
     }
 }
