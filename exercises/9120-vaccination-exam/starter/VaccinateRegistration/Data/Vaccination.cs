@@ -9,9 +9,12 @@ namespace VaccinateRegistration.Data
     {
         public int Id { get; set; }
 
-        // This class is NOT COMPLETE.
-        // Todo: Complete the class according to the requirements
-
+        [Required]
         public DateTime VaccinationDate { get; set; }
+
+        [Required]
+        public int RegistrationId { get; set; }
+
+        public Registration Registration { get; set; }
     }
 }

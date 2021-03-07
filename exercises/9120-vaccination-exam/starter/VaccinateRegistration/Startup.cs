@@ -17,8 +17,8 @@ namespace VaccinateRegistration
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // Note: This method is NOT COMPLETE.
-            // Todo: Complete the class according to the requirements
+            services.AddDbContext<VaccinateDbContext>(options => options.UseSqlServer(
+                Configuration["ConnectionStrings:DefaultConnection"]));
 
             services.AddControllers();
         }

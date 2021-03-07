@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -21,6 +22,10 @@ namespace VaccinateRegistration.Data
         // This class is NOT COMPLETE.
         // Todo: Complete the class according to the requirements
 
+        public DbSet<Registration> Registrations { get; set; }
+
+        public DbSet<Vaccination> Vaccinations { get; set; }
+
         /// <summary>
         /// Import registrations from JSON file
         /// </summary>
@@ -28,17 +33,26 @@ namespace VaccinateRegistration.Data
         /// <returns>
         /// Collection of all imported registrations
         /// </returns>
-        public Task<IEnumerable<Registration>> ImportRegistrations(string registrationsFileName)
+        public async Task<IEnumerable<Registration>> ImportRegistrations(string registrationsFileName)
         {
-            throw new NotImplementedException();
+            using FileStream jsonFile = File.OpenRead(registrationsFileName);
+            var RegistrationResult = await JsonSerializer.DeserializeAsync<IEnumerable<Registration>>(jsonFile);
+
+            if (RegistrationResult is null) throw new ArgumentException("File not found or no data in file");
+
+            AddRange(RegistrationResult);
+            await SaveChangesAsync();
+
+            return RegistrationResult;
         }
 
         /// <summary>
         /// Delete everything (registrations, vaccinations)
         /// </summary>
-        public Task DeleteEverything()
+        public async Task DeleteEverything()
         {
-            throw new NotImplementedException();
+            await Database.ExecuteSqlRawAsync("DELETE from Vaccinations");
+            await Database.ExecuteSqlRawAsync("DELETE from Registrations");
         }
 
         /// <summary>
@@ -49,9 +63,13 @@ namespace VaccinateRegistration.Data
         /// <returns>
         /// Registration result or null if no registration with given SSN and PIN was found.
         /// </returns>
-        public Task<GetRegistrationResult?> GetRegistration(long ssn, int pin)
+        public async Task<GetRegistrationResult?> GetRegistration(long ssn, int pin)
         {
-            throw new NotImplementedException();
+            var result = await Registrations.FirstOrDefaultAsync(r => r.SocialSecurityNumber == ssn && r.PinCode == pin);
+
+            if (result is null) return null;
+
+            return new GetRegistrationResult(result.Id, result.SocialSecurityNumber, result.FirstName, result.LastName);
         }
 
         /// <summary>
@@ -61,9 +79,38 @@ namespace VaccinateRegistration.Data
         /// <returns>
         /// Collection of all available time slots
         /// </returns>
-        public Task<IEnumerable<DateTime>> GetTimeslots(DateTime date)
+        public async IAsyncEnumerable<DateTime> GetTimeslots(DateTime date)
         {
-            throw new NotImplementedException();
+            List<TimeSpan> timeSlots = TimeSlots().ToList();
+            List<DateTime> avaiableTimeSlots = new();
+
+            var vaccinationsDay = await Vaccinations
+                .Select(v => v.VaccinationDate)
+                .Where(d => d.Date == date.Date).ToListAsync();
+
+            foreach (var time in vaccinationsDay)
+            {
+                timeSlots.Remove(time.TimeOfDay);
+            }
+
+            foreach (var avaiableTime in timeSlots)
+            {
+                yield return date + avaiableTime;
+            }
+        }
+
+        private IEnumerable<TimeSpan> TimeSlots()
+        {
+            TimeSpan timeSlot = new(7,45,0);
+            TimeSpan interval = new(0,15,0);
+            TimeSpan lastSlot = new(11, 45, 0);
+
+            while (timeSlot < lastSlot)
+            {
+                timeSlot += interval;
+
+                yield return timeSlot;
+            }
         }
 
         /// <summary>
@@ -77,9 +124,22 @@ namespace VaccinateRegistration.Data
         /// If a vaccination with the given vaccination.RegistrationID already exists,
         /// overwrite it. Otherwise, insert a new vaccination.
         /// </remarks>
-        public  Task<Vaccination> StoreVaccination(StoreVaccination vaccination)
+        public async Task<Vaccination> StoreVaccination(StoreVaccination vaccination)
         {
-            throw new NotImplementedException();
+            if(await Vaccinations.AnyAsync(v => v.VaccinationDate == vaccination.Datetime))
+            {
+                throw new ArgumentException("The date and time is already taken.");
+            }
+
+            Vaccination storeOneVaccination = new() { 
+                RegistrationId = vaccination.RegistrationId, 
+                VaccinationDate = vaccination.Datetime 
+            };
+
+            Vaccinations.Add(storeOneVaccination);
+            await SaveChangesAsync();
+
+            return storeOneVaccination;
         }
     }
 }

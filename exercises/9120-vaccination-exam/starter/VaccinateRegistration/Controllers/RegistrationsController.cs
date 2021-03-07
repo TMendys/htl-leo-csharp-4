@@ -10,22 +10,27 @@ namespace VaccinateRegistration.Controllers
     [ApiController]
     public class RegistrationsController : ControllerBase
     {
-        public RegistrationsController() { }
+        private readonly VaccinateDbContext context;
+
+        public RegistrationsController(VaccinateDbContext context)
+        {
+            this.context = context;
+        }
 
         // This class is NOT COMPLETE.
         // Todo: Complete the class according to the requirements
 
         [HttpGet]
-        public Task<GetRegistrationResult?> GetRegistration([FromQuery] long ssn, [FromQuery] int pin)
+        public async Task<GetRegistrationResult?> GetRegistration([FromQuery] long ssn, [FromQuery] int pin)
         {
-            throw new NotImplementedException();
+            return await context.GetRegistration(ssn, pin);
         }
 
         [HttpGet]
         [Route("timeSlots")]
-        public Task<IEnumerable<DateTime>> GetTimeslots([FromQuery] DateTime date)
+        public IAsyncEnumerable<DateTime> GetTimeslots([FromQuery] DateTime date)
         {
-            throw new NotImplementedException();
+            return context.GetTimeslots(date);
         }
     }
 }

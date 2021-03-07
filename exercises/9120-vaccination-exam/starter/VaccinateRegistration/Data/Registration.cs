@@ -21,7 +21,7 @@ namespace VaccinateRegistration.Data
         [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
 
-        // This class is NOT COMPLETE.
-        // Todo: Complete the class according to the requirements
+        public Vaccination? BookedVaccination { get; set; }
+
     }
 }

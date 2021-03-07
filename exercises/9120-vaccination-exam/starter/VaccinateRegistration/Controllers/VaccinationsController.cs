@@ -9,15 +9,20 @@ namespace VaccinateRegistration.Controllers
     [ApiController]
     public class VaccinationsController : ControllerBase
     {
-        public VaccinationsController() { }
+        private readonly VaccinateDbContext context;
+
+        public VaccinationsController(VaccinateDbContext context)
+        {
+            this.context = context;
+        }
 
         // This class is NOT COMPLETE.
         // Todo: Complete the class according to the requirements
 
         [HttpPost]
-        public Task<Vaccination> StoreVaccination([FromBody] StoreVaccination vaccination)
+        public async Task<Vaccination> StoreVaccination([FromBody] StoreVaccination vaccination)
         {
-            throw new NotImplementedException();
+            return await context.StoreVaccination(vaccination);
         }
     }
 }
